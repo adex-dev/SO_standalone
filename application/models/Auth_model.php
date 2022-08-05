@@ -99,7 +99,7 @@ class Auth_model extends CI_Model {
  
    function getdatainventori()
    {
-     $this->_getTabledumy();
+     $this->_getTablData();
      if ($_POST['length'] != -1)
        $this->db->limit($_POST['length'], $_POST['start']);
      $query = $this->db->get();

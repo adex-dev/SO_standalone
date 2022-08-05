@@ -36,15 +36,19 @@ class Homeproses extends CI_Controller
   {
     $list = $this->auth_model->getdatainventori();
     $data = array();
+    $tanggal = $this->session->userdata('tanggal');
+    $store = $this->session->userdata('store');
     $no = $_POST['start'];
     foreach ($list as $dt) {
       $nama = $this->db->select('nama')->where('nik', $dt->nik)->get('users')->row()->nama;
+      $totalsum = $this->db->query("select sum(onganscan) as total from inventorisdata where tanggal='$tanggal' AND kode_store='$store' AND flor='$dt->flor'")->row();
       $no++;
       $row   = array();
       $row[] = $dt->ean;
-      $row[] = $dt->onhand_scan;
+      $row[] = $dt->onganscan;
       $row[] = $dt->flor;
       $row[] = $nama;
+      $row[] = "total item $dt->flor : $totalsum->total pcs";
       $row[] = $this->session->userdata('namastore');
       $data[] = $row;
     }
@@ -76,27 +80,29 @@ class Homeproses extends CI_Controller
       $images = $this->upload->data();
       $imagess = $images['file_name'];
       $file_data = fopen("./content/sampel/upload/" . $imagess, 'r');
-      fgets($file_data);
       $wheredelete = ['kode_store' => $store];
       $this->db->delete('dummydata', $wheredelete);
-      while ($row = fgets($file_data)) {
-        $insert_data = ['tanggal' => $tanggal, 'kode_store' => $store, 'nik' => $nik, 'flor' => $flor, 'ean' => trim($row), 'onhand_scan' => 1];
-        $insert_data2 = ['tanggal' => $tanggal, 'kode_store' => $store, 'nik' => $nik, 'flor' => $flor, 'ean' => trim($row), 'onganscan' => 1];
-        $where = ['tanggal' => $tanggal, 'kode_store' => $store, 'nik' => $nik, 'flor' => $flor, 'ean' => trim($row)];
-        $where2 = ['tanggal' => $tanggal, 'kode_store' => $store, 'nik' => $nik, 'flor' => $flor, 'ean' => trim($row)];
-        $cek = $this->db->get_where('dummydata', $where);
-        $cek2 = $this->db->get_where('inventorisdata', $where2);
-        if ($cek2->num_rows() > 0) {
-          $b = $cek2->row()->onganscan + 1;
-          $this->db->update('inventorisdata', ['onganscan' => $b], $where2);
-        } else {
-          $this->db->insert('inventorisdata', $insert_data2);
-        };
-        if ($cek->num_rows() > 0) {
-          $a = $cek->row()->onhand_scan + 1;
-          $sukses = $this->db->update('dummydata', ['onhand_scan' => $a], $where);
-        } else {
-          $sukses = $this->db->insert('dummydata', $insert_data);
+      while (!feof($file_data)) {
+        $content = fgets($file_data);
+        $row = explode(',', $content);
+        if (!empty($row[0])) {
+          $where = ['tanggal' => $tanggal, 'kode_store' => $store, 'nik' => $nik, 'flor' => $flor, 'ean' => trim($row[0])];
+          $where2 = ['tanggal' => $tanggal, 'kode_store' => $store, 'nik' => $nik, 'flor' => $flor, 'ean' => trim($row[0])];
+          $cek = $this->db->get_where('dummydata', $where);
+          $cek2 = $this->db->get_where('inventorisdata', $where2);
+          if ($cek2->num_rows() > 0) {
+            $b = $cek2->row()->onganscan + 1;
+            $this->db->update('inventorisdata', ['onganscan' => $b], $where2);
+          } else {
+            $insert_data2 = ['tanggal' => $tanggal, 'kode_store' => $store, 'nik' => $nik, 'flor' => $flor, 'ean' => trim($row[0]), 'onganscan' => '1'];
+            $this->db->insert('inventorisdata', $insert_data2);
+          };
+          if ($cek->num_rows() > 0) {
+            $a = $cek->row()->onhand_scan + 1;
+            $sukses = $this->db->update('dummydata', ['onhand_scan' => $a], $where);
+          } else {
+            $sukses = $this->db->insert('dummydata', ['tanggal' => $tanggal, 'nik' => $nik, 'kode_store' => $store, 'ean' => trim($row[0]), 'flor' => $flor, 'onhand_scan' => '1']);
+          }
         }
       }
       if ($sukses) {
@@ -113,6 +119,15 @@ class Homeproses extends CI_Controller
     }
     echo json_encode($msg);
   }
+  public function test()
+  {
+    $file_data = fopen("./content/sampel/upload/1_-_Copy.txt", 'r');
+    while (!feof($file_data)) {
+      $content = fgets($file_data);
+      $row = explode(',', $content);
+      print_r($row);
+    }
+  }
   public function kirimdataserver()
   {
     if ($this->session->userdata('store')) {
@@ -127,9 +142,9 @@ class Homeproses extends CI_Controller
         if ($this->db_server->get_where('prm_auditor', ['periode_audit' => $tanggal, 'kode_store' => $store, 'status_audit' => 'SELESAI'])->num_rows() > 0) {
           $msg = ['gagal' => 'the audit status period    ' . $tanggal . ' is complete'];
         } else {
-          foreach ($getlokaldata as $value) {
-            $cek = $this->db_server->get_where('prm_stock', ['periode' => $value->tanggal, 'kode_store' => $value->kode_store]);
-            if ($cek->num_rows() > 0) {
+          $cek = $this->db_server->get_where('prm_stock', ['periode' => $tanggal, 'kode_store' => $store]);
+          if ($cek->num_rows() > 0) {
+            foreach ($getlokaldata as $value) {
               $cek2 = $this->db_server->get_where('prm_stock', ['periode' => $value->tanggal, 'kode_store' => $value->kode_store, 'ean' => $value->ean]);
               if ($cek2->num_rows() > 0) {
                 $jmlah = (int) $cek2->row()->onhand_scan + $value->onganscan;
@@ -138,7 +153,7 @@ class Homeproses extends CI_Controller
                 $dbinsert = ['periode' => $value->tanggal, 'ean' => $value->ean, 'kode_store' => $value->kode_store, 'nama_store' => $namastore, 'onhand_scan' => $value->onganscan];
                 $sukses = $this->db_server->insert('prm_stock', $dbinsert);
               }
-              if ($this->db_server->get_where('temp_stock', ['periode' => $tanggal, 'kode_store' => $store, 'ean' => $value->ean, 'state' => $value->flor, 'status_audit' => 'SELESAI'])->num_rows() > 0) {
+               if ($this->db_server->get_where('temp_stock', ['periode' => $tanggal, 'kode_store' => $store, 'ean' => $value->ean, 'state' => $value->flor, 'status_audit' => 'SELESAI'])->num_rows() > 0) {
               } else {
                 $rs = $this->db_server->get_where('temp_stock', ['periode' => $tanggal, 'kode_store' => $store, 'ean' => $value->ean, 'state' => $value->flor, 'nik' => $nik]);
                 if ($rs->num_rows() > 0) {
@@ -148,13 +163,12 @@ class Homeproses extends CI_Controller
                   $this->db_server->insert('temp_stock', ['periode' => $tanggal, 'kode_store' => $store, 'nik' => $nik, 'ean' => $value->ean, 'onhand_scan' => $value->onganscan, 'state' => $value->flor]);
                 }
               }
-            } else {
-              $msg = ['gagal' => 'Master Has not been uploaded to the server'];
             }
-          }
-          if ($sukses) {
-
-            $msg = ['sukses' => 'Success'];
+            if ($sukses) {
+              $msg = ['sukses' => 'Success'];
+            }
+          } else {
+            $msg = ['gagal' => 'Master Has not been uploaded to the server'];
           }
         }
         fclose($connected);

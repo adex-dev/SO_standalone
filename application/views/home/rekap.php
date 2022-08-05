@@ -17,6 +17,7 @@
                     <th>State</th>
                     <th>Nama</th>
                     <th>Store</th>
+                    <th>Total qty</th>
                   </tr>
                 </thead>
                 <tbody>

@@ -26,10 +26,10 @@ $db['default'] = array(
 );
 $db['db_server'] = array(
   'dsn'  => '',
-  'hostname' => 'akmadnudin.com', //link server
-  'username' => 'root', //username server
-  'password' => '{Xksb-8@dK-y',
-  'database' => 'tes', //db server
+	'hostname' => 'inventory.ptscu.net',
+	'username' => 'k3164444_scu',
+	'password' => '{Xksb-8@dK-y',
+	'database' => 'k3164444_inventory',
   'dbdriver' => 'mysqli',
   'dbprefix' => '',
   'pconnect' => FALSE,

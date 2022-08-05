@@ -20,6 +20,9 @@
                 </thead>
                 <tbody>
                 </tbody>
+                <tfoot>
+                  <tr><td colspan="1">Total</td><td>0</td></tr>
+                </tfoot>
               </table>
             </div>
           </div>

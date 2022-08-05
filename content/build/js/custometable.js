@@ -48,6 +48,27 @@ $(document).ready(function () {
       zeroRecords: "Tidak ditemukan data yang sesuai",
     },
     "footerCallback": function (row, data, start, end, display) {
+      var api = this.api(), data;
+
+      // converting to interger to find total
+      var intVal = function (i) {
+        return typeof i === 'string' ?
+          i.replace(/[\$,]/g, '') * 1 :
+          typeof i === 'number' ?
+            i : 0;
+      };
+
+      // computing column Total of the complete result 
+      var monTotal = api
+        .column(1)
+        .data()
+        .reduce(function (a, b) {
+          return intVal(a) + intVal(b);
+        }, 0);
+
+      // Update footer by showing the total with the reference of the column index 
+      $(api.column(0).footer()).html('Total');
+      $(api.column(1).footer()).html(monTotal);
     },
   });
   $(".tablerekap").DataTable({
@@ -127,7 +148,7 @@ $(document).ready(function () {
     },
     order: [[4, 'asc']],
     rowGroup: {
-      dataSrc: [4]
+      dataSrc: [5,4]
     },
     language: {
       emptyTable: "Tidak terdapat data di tabel",
