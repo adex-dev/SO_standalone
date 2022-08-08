@@ -48,7 +48,7 @@ class Auth extends CI_Controller
       $apikeyuser = json_decode($apikey);
       foreach ($apikeyuser as $value) {
         if ($this->db->get_where('users', ['nik' => $value->nik])->num_rows() > 0) {
-          $sukses = $this->db->update('users', ['nik' => $value->nik, 'nama' => $value->nama, 'password' => $value->password, 'status' => $value->status, 'level' => $value->level], ['kode_store' => $value->kode_store]);
+          $sukses = $this->db->update('users', ['nik' => $value->nik, 'nama' => $value->nama, 'password' => $value->password, 'status' => $value->status, 'level' => $value->level],['nik' => $value->nik]);
         } else {
           $sukses = $this->db->insert('users', ['nik' => $value->nik, 'nama' => $value->nama, 'password' => $value->password, 'status' => $value->status, 'level' => $value->level]);
         }
