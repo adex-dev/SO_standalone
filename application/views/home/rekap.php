@@ -22,6 +22,10 @@
                 </thead>
                 <tbody>
                 </tbody>
+                <tfoot>
+                <tr>
+                <td>Total</td><td>0</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+                </tfoot>
               </table>
             </div>
           </div>
